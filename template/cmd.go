@@ -6,11 +6,7 @@ import (
 	"flag"
 	"fmt"
 	"os"
-)
-
-var (
-	// version is set at build time
-	Version = "No version provided at build time"
+	"{{.Module}}/pkg/version"
 )
 
 func main() {
@@ -21,12 +17,12 @@ func main() {
 }
 
 func run() error {
-	version := false
-	flag.BoolVar(&version, "version", false, "Show version")
+	showVersion := flag.Bool("version", false, "Show version")
 	flag.Parse()
 
-	if version {
-		fmt.Printf("version: %s\n", Version)
+	if *showVersion {
+		fmt.Print(version.Version())
+		return nil
 	}
 	return nil
 }
