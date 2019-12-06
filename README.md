@@ -1,7 +1,7 @@
 # Gootstrap
 
-[![Build Status](https://travis-ci.org/NeowayLabs/gootstrap.svg?branch=master)](https://travis-ci.org/NeowayLabs/gootstrap)
-[![Go Report Card](https://goreportcard.com/badge/github.com/NeowayLabs/gootstrap)](https://goreportcard.com/report/github.com/NeowayLabs/gootstrap)
+[![Build Status](https://travis-ci.org/ppizarro/gootstrap.svg?branch=master)](https://travis-ci.org/ppizarro/gootstrap)
+[![Go Report Card](https://goreportcard.com/badge/github.com/ppizarro/gootstrap)](https://goreportcard.com/report/github.com/ppizarro/gootstrap)
 
 Gootstrap stands for Go Bootstrap. It aims to provide bootstraping when
 starting Go projects, helping you to go from 0 to 100 and with some
@@ -32,7 +32,7 @@ To generate a project you need to install gootstrap, if you
 have Go installed in your host it is as easy as:
 
 ```
-go install github.com/NeowayLabs/gootstrap/cmd/gootstrap
+go install github.com/ppizarro/gootstrap/cmd/gootstrap
 ```
 
 To use the generated project you will need [Docker](https://www.docker.com/).
