@@ -8,7 +8,7 @@ import (
 	"path/filepath"
 	texttemplate "text/template"
 
-	"github.com/NeowayLabs/gootstrap/template"
+	"github.com/ppizarro/gootstrap/template"
 )
 
 // Config used by template functions
