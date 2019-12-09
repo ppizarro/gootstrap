@@ -17,6 +17,7 @@ type Config struct {
 	Module        string
 	DockerImg     string
 	GoVersion     string
+	GoDigest      string
 	CILintVersion string
 	AlpineVersion string
 }

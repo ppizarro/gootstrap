@@ -9,9 +9,14 @@ import (
 	"github.com/ppizarro/gootstrap"
 )
 
-const GoVersion = "1.12.5"
-const CILintVersion = "1.13.2"
-const AlpineVersion = "3.9"
+// GoVersion the Go version
+const GoVersion = "1.13.5"
+
+// GoDigest the hash digest from golang image
+const GoDigest = "sha256:3997ddbf0c313c5b629eccbdf14e098f4d3ad23cb1f2d9f8cb66707c9ee4ce79" // golang:1.13.5-stretch
+
+// CILintVersion the golangci-lint version
+const CILintVersion = "1.21.0"
 
 func main() {
 
@@ -61,10 +66,11 @@ func main() {
 		Module:        module,
 		DockerImg:     dockerimg,
 		GoVersion:     GoVersion,
+		GoDigest:      GoDigest,
 		CILintVersion: CILintVersion,
-		AlpineVersion: AlpineVersion,
 	}
-	gootstrap.CreateProject(cfg, outputdir)
+	err = gootstrap.CreateProject(cfg, outputdir)
+	abortonerr(err)
 }
 
 func getcwd() string {

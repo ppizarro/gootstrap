@@ -3,7 +3,8 @@ package template
 const Dockerfile = `# ---------------------------------------------------------------------
 #  The first stage container, for image base
 # ---------------------------------------------------------------------
-FROM golang:{{.GoVersion}}-stretch as base
+#FROM golang:{{.GoVersion}}-stretch as base
+FROM golang@{{.GoDigest}} AS base
 
 ENV GOLANG_CI_LINT_VERSION=v{{.CILintVersion}}
 
