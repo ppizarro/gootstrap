@@ -1,5 +1,6 @@
 package template
 
+// Version the version of the whole project
 const Version = `package version
 
 import "fmt"
