@@ -1,10 +1,10 @@
 package template
 
 const Dockerfile = `# ---------------------------------------------------------------------
-#  The first stage container, for image base
+#  The first stage container, for image dev
 # ---------------------------------------------------------------------
-#FROM golang:{{.GoVersion}}-stretch as base
-FROM golang@{{.GoDigest}} AS base
+#FROM golang:{{.GoVersion}}-stretch AS dev
+FROM golang@{{.GoDigest}} AS dev
 
 ENV GOLANG_CI_LINT_VERSION=v{{.CILintVersion}}
 
@@ -14,34 +14,33 @@ RUN cd /usr && \
 ARG USER_ID
 ARG GROUP_ID
 
-RUN groupadd -f -g ${GROUP_ID} appuser && \
-    useradd -m -g ${GROUP_ID} -u ${USER_ID} appuser || echo "user already exists"
+RUN groupadd -f -g ${GROUP_ID} devuser && \
+    useradd -m -g ${GROUP_ID} -u ${USER_ID} devuser || echo "user already exists"
 
 USER ${USER_ID}:${GROUP_ID}
 
 WORKDIR /app
 
+COPY go.mod .
+COPY go.sum .
+
+RUN go mod download
+
 # ---------------------------------------------------------------------
 #  The second stage container, for building the application
 # ---------------------------------------------------------------------
-FROM base AS builder
+FROM dev AS builder
 
 RUN apt-get update && \
     apt-get dist-upgrade -y && \
     apt-get install -y --no-install-recommends ca-certificates tzdata && \
-	update-ca-certificates
-
-RUN adduser --disabled-password --gecos '' appuser
-
-WORKDIR $GOPATH/src/{{.Module}}
+	    update-ca-certificates
 
 COPY . .
 
-RUN go mod download
+ARG LDFLAGS
 
-ARG VERSION
-
-RUN GOOS=linux GOARCH=amd64 CGO_ENABLED=0 go build -ldflags="-w -s -X main.Version=${VERSION}" -o /go/bin/{{.Project}} ./cmd/{{.Project}}
+RUN GOOS=linux GOARCH=amd64 CGO_ENABLED=0 go build -ldflags="$LDFLAGS" -o /app/{{.Project}} ./cmd/{{.Project}}
 
 # ---------------------------------------------------------------------
 #  The third stage container, for running the application
@@ -52,10 +51,10 @@ COPY --from=builder /usr/share/zoneinfo /usr/share/zoneinfo
 COPY --from=builder /etc/ssl/certs/ca-certificates.crt /etc/ssl/certs/
 COPY --from=builder /etc/passwd /etc/passwd
 COPY --from=builder /etc/group /etc/group
-COPY --from=builder /go/bin/{{.Project}} /bin/{{.Project}}
+COPY --from=builder /app/{{.Project}} /bin/{{.Project}}
 
 # Use an unprivileged user.
-USER appuser
+USER nobody
 
 ENTRYPOINT ["/bin/{{.Project}}"]
 `

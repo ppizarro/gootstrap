@@ -25,17 +25,17 @@ type Config struct {
 // CreateProject creates a project
 func CreateProject(cfg Config, rootdir string) error {
 	files := map[string]string{
-		"go.sum":                           "",
-		"go.mod":                           template.GoMod,
-		"README.md":                        template.Readme,
-		"Makefile":                         template.Makefile,
-		"Dockerfile":                       template.Dockerfile,
-		"hack/githooks/pre-commit":         template.GitHookPreCommit,
-		".gitignore":                       template.GitIgnore,
-		".dockerignore":                    template.DockerIgnore,
-		".gitlab-ci.yml":                   template.GitlabCI,
-		"pkg/version/version.go":           template.Version,
-		"cmd/{{.Project}}/{{.Project}}.go": template.Cmd,
+		"go.sum":                   "",
+		"go.mod":                   template.GoMod,
+		"README.md":                template.Readme,
+		"Makefile":                 template.Makefile,
+		"Dockerfile":               template.Dockerfile,
+		"hack/githooks/pre-commit": template.GitHookPreCommit,
+		".gitignore":               template.GitIgnore,
+		".dockerignore":            template.DockerIgnore,
+		".gitlab-ci.yml":           template.GitlabCI,
+		"pkg/version/version.go":   template.Version,
+		"cmd/{{.Project}}/main.go": template.Main,
 	}
 
 	for pathtmpl, contenttmpl := range files {

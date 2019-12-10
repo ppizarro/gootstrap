@@ -12,13 +12,13 @@ TODO
 
 Run:` +
 
-	"\n\n```\nmake check\n```\n" +
+	"\n\n```\nmake test\n```\n" +
 
 	"Open generated coverage on a browser:\n\n" +
 
 	"```\nmake coverage\n```\n" +
 
-	"To perform static analysis:\n\n```\nmake analyze\n```\n" +
+	"To perform static analysis:\n\n```\nmake lint\n```\n" +
 
 	`
 ## Releasing

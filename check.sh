@@ -24,12 +24,12 @@ echo "building"
 make build
 
 echo
-echo "checking"
-make check
+echo "testing"
+make test
 
 echo
 echo "analyzing"
-make static-analysis
+make lint
 
 echo
 echo "formatting"

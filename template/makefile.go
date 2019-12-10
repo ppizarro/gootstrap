@@ -1,21 +1,19 @@
 package template
 
+// Makefile template for Makefile
 const Makefile = `version ?= latest
 img = {{.DockerImg}}:$(version)
-imgdev = {{.DockerImg}}dev:$(version)
+imgdev = {{.DockerImg}}-dev:$(version)
 uid=$(shell id -u $$USER)
 gid=$(shell id -g $$USER)
 dockerbuilduser=--build-arg USER_ID=$(uid) --build-arg GROUP_ID=$(gid)
 wd=$(shell pwd)
-modcachedir=$(wd)/.gomodcachedir
-cachevol=$(modcachedir):/go/pkg/mod
 appvol=$(wd):/app
-run=docker run --rm -ti -v $(appvol) -v $(cachevol) $(imgdev)
-runbuild=docker run --rm -ti -e CGO_ENABLED=0 -e GOOS=linux -e GOARCH=amd64 -v $(appvol) -v $(cachevol) $(imgdev)
+rundev=docker run -it --rm -v $(appvol) $(imgdev)
+runbuild=docker run --rm -e CGO_ENABLED=0 -e GOOS=linux -e GOARCH=amd64 -v $(appvol) $(imgdev)
+ldflags="-w -s -X {{.Module}}/pkg/version.Semver=$(version) -X {{.Module}}/pkg/version.GitSHA=$(shell git rev-parse --short HEAD)"
 cov=coverage.out
 covhtml=coverage.html
-
-all: check build
 
 guard-%:
 	@ if [ "${${*}}" = "" ]; then \
@@ -23,50 +21,87 @@ guard-%:
 		exit 1; \
 	fi
 
-# WHY: If cache dir does not exist it is mapped inside container as root
-# If it exists it is mapped belonging to the non-root user inside the container
-modcache:
-	@mkdir -p $(modcachedir)
+.PHONY: imagedev
+imagedev: ##@development build image docker dev
+	docker build . --target dev $(dockerbuilduser) -t $(imgdev)
 
-image:
-	docker build . -t $(img) --build-arg VERSION=$(version)
-
-imagedev:
-	docker build . --target base -t $(imgdev) $(dockerbuilduser)
-
-release: guard-version publish
-	git tag -a $(version) -m "Generated release "$(version)
-	git push origin $(version)
-
-publish: image
-	docker push $(img)
-
-build: modcache imagedev
-	$(runbuild) go build -v -ldflags "-w -s -X {{.Module}}/pkg/version.GitVersion=$(version)" -o ./cmd/{{.Project}}/{{.Project}} ./cmd/{{.Project}}
-
-check: modcache imagedev
-	$(run) go test -timeout 60s -race -coverprofile=$(cov) ./...
-
-coverage: modcache check
-	$(run) go tool cover -html=$(cov) -o=$(covhtml)
-	xdg-open coverage.html
-
-static-analysis: modcache imagedev
-	$(run) golangci-lint run ./...
-
-modtidy: modcache imagedev
-	$(run) go mod tidy
-
-fmt: modcache imagedev
-	$(run) gofmt -w -s -l .
-
-githooks:
+.PHONY: githooks
+githooks: ##@development install git hooks
 	@echo "copying git hooks"
 	@mkdir -p .git/hooks
 	@cp hack/githooks/pre-commit .git/hooks/pre-commit
 	@chmod +x .git/hooks/pre-commit
 	@echo "git hooks copied"
 
-shell: modcache imagedev
-	$(run) sh
+.PHONY: shell
+shell: imagedev ##@development open shell in the development image
+	$(rundev) bash
+
+.PHONY: release
+release: guard-version publish ##@production create a git tag and build and publish a docker image
+	git tag -a $(version) -m "Generated release "$(version)
+	git push origin $(version)
+
+.PHONY: lint
+lint: imagedev ##@lint static analysis code base
+	$(rundev) golangci-lint run --enable-all
+
+.PHONY: test
+test: imagedev ##@test run all tests
+	$(rundev) go test ./... -race -covermode=atomic -coverprofile=$(cov) -timeout 30s -v
+
+.PHONY: coverage
+coverage: test ##@test coverage all tests package
+	$(rundev) go tool cover -html=$(cov) -o=$(covhtml)
+	xdg-open coverage.html
+
+.PHONY: build
+build: imagedev ##@development Build binary
+	$(runbuild) go build -v -ldflags $(ldflags) -o ./cmd/{{.Project}}/{{.Project}} ./cmd/{{.Project}}
+
+.PHONY: image
+image: ##@production Build docker image
+	docker build . --build-arg LDFLAGS=$(ldflags) -t $(img)
+
+.PHONY: publish
+publish: image ##@production Build and publish docker image
+	docker push $(img)
+
+.PHONY: modtidy
+modtidy: imagedev ##@development add missing and remove unused modules
+	$(rundev) go mod tidy
+
+.PHONY: fmt
+fmt: imagedev ##@development fmt project
+	$(rundev) gofmt -w -s -l .
+
+.PHONY: run
+run: image ##@development execute docker image
+	docker run --rm -p 8080:8080 $(img)
+
+.DEFAULT_GOAL := help
+#COLORS
+GREEN  := $(shell tput -Txterm setaf 2)
+WHITE  := $(shell tput -Txterm setaf 7)
+YELLOW := $(shell tput -Txterm setaf 3)
+RESET  := $(shell tput -Txterm sgr0)
+
+# Add the following 'help' target to your Makefile
+# And add help text after each target name starting with '\#\#'
+# A category can be added with @category
+HELP_FUN = \
+	%help; \
+	while(<>) { push @{$$help{$$2 // 'options'}}, [$$1, $$3] if /^([a-zA-Z\-]+)\s*:.*\#\#(?:@([a-zA-Z\-]+))?\s(.*)$$/ }; \
+	print "usage: make [target]\n\n"; \
+	for (sort keys %help) { \
+	print "${WHITE}$$_:${RESET}\n"; \
+	for (@{$$help{$$_}}) { \
+	$$sep = " " x (32 - length $$_->[0]); \
+	print "  ${YELLOW}$$_->[0]${RESET}$$sep${GREEN}$$_->[1]${RESET}\n"; \
+	}; \
+	print "\n"; }
+
+.PHONY: help
+help: ##@other Show this help.
+	@perl -e '$(HELP_FUN)' $(MAKEFILE_LIST)
 `
