@@ -23,14 +23,14 @@ func main() {
 func run() error {
 	flagSet := flag.NewFlagSet("{{.Project}}", flag.ExitOnError)
 	showVersion := flagSet.Bool("version", false, "Show version")
-	
+
 	if err := flagSet.Parse(os.Args[1:]); err != nil {
 		return fmt.Errorf("failure on parse command line argunments: %q", err)
 	}
 
 	if *showVersion {
 		fmt.Print(version.Version())
-	    return nil
+		return nil
 	}
 
 	return nil

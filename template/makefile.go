@@ -1,9 +1,10 @@
 package template
 
 // Makefile template for Makefile
-const Makefile = `version ?= latest
-img = {{.DockerImg}}:$(version)
-imgdev = {{.DockerImg}}-dev:$(version)
+const Makefile = `version?=latest
+commit_sha=$(shell git rev-parse --short HEAD)
+img={{.DockerImg}}:$(version)
+imgdev={{.DockerImg}}-dev:$(version)
 uid=$(shell id -u $$USER)
 gid=$(shell id -g $$USER)
 dockerbuilduser=--build-arg USER_ID=$(uid) --build-arg GROUP_ID=$(gid)
@@ -11,15 +12,9 @@ wd=$(shell pwd)
 appvol=$(wd):/app
 rundev=docker run -it --rm -v $(appvol) $(imgdev)
 runbuild=docker run --rm -e CGO_ENABLED=0 -e GOOS=linux -e GOARCH=amd64 -v $(appvol) $(imgdev)
-ldflags="-w -s -X {{.Module}}/pkg/version.Semver=$(version) -X {{.Module}}/pkg/version.GitSHA=$(shell git rev-parse --short HEAD)"
+ldflags="-w -s -X {{.Module}}/pkg/version.Semver=$(version) -X {{.Module}}/pkg/version.GitSHA=$(commit_sha)"
 cov=coverage.out
 covhtml=coverage.html
-
-guard-%:
-	@ if [ "${${*}}" = "" ]; then \
-		echo "Variable '$*' not set"; \
-		exit 1; \
-	fi
 
 .PHONY: imagedev
 imagedev: ##@development build image docker dev
@@ -38,7 +33,7 @@ shell: imagedev ##@development open shell in the development image
 	$(rundev) bash
 
 .PHONY: release
-release: guard-version publish ##@production create a git tag and build and publish a docker image
+release: publish ##@production create a git tag and build and publish a docker image
 	git tag -a $(version) -m "Generated release "$(version)
 	git push origin $(version)
 
